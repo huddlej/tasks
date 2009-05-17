@@ -1,0 +1,7 @@
+.closed {
+    text-decoration: line-through;
+}
+
+ol li p {
+    display: inline;
+}
