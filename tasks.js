@@ -8,7 +8,7 @@ var Task = {
         if(tasks && tasks.total_rows > 0) {
             for(var index = 0; index < tasks.total_rows; index++) {
                 var task = tasks.rows[index].value;
-                Task.insert(task);
+                Task.add_to_dom(task);
             }
         }
     },
@@ -26,15 +26,36 @@ var Task = {
                 console.log("Saved doc successfully");
                 console.log(response);
                 console.log("Added task with new id: " + task._id);
-                Task.insert(task);
+                Task.add_to_dom(task);
             }});
         }
     },
 
-    insert: function(task) {
+    delete: function() {
+        var id = $(this).parent().attr("id");
+        console.log("Deleting task: " + id);
+        var task = Task._tasks[id];
+
+        // Delete task from the database by marking it as deleted.
+        task.is_deleted = true;
+        Task.db.saveDoc(task, {success: function(response) {
+            console.log("Deleted doc successfully");
+            console.log(response);
+        }});
+
+        // Delete task from task array.
+        delete Task._tasks[id];
+
+        // Delete task from the page.
+        Task.delete_from_dom(task);
+
+        return false;
+    },
+
+    add_to_dom: function(task) {
         // Add task to the list of available tasks.
         Task._tasks[task._id] = task;
-        console.log("Inserting task into DOM: " + task._id);
+        console.log("Adding task to DOM: " + task._id);
         var task_list = $("<li id=\"" + task._id + "\"></li>");
 
         var task_checkbox = $("<input type=\"checkbox\" />");
@@ -52,12 +73,25 @@ var Task = {
 
         task_list.append(task_checkbox);
         task_list.append(task_text);
+
+        var delete_link = $("<a href=\"\">x</a>");
+        delete_link.click(Task.delete);
+        task_list.append("&nbsp;").append(delete_link);
+
         $("#unassigned-tasks").prepend(task_list);
+    },
+
+    delete_from_dom: function(task) {
+        // Delete the given tasks from the DOM.  This does not alter the global
+        // task array or delete the task from the database.
+        $("#" + task._id).remove();
     },
 
     edit: function() {
         console.log("Editing task: " + $(this).text());
-        var task_input = $("<input type=\"text\" />");
+        // Make edit fields the length of the text to be edited.
+        var size = String($(this).text().length);
+        var task_input = $("<input type=\"text\" size=\"" + size + "\" />");
         task_input.val($(this).text());
         task_input.blur(Task.update);
         $(this).replaceWith(task_input);
