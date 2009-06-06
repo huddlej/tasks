@@ -68,7 +68,7 @@ var Task = {
             task_text.addClass("closed");
         }
         else {
-            task_text.click(Task.edit);
+            task_text.dblclick(Task.edit);
         }
 
         task_list.append(task_checkbox);
@@ -120,7 +120,7 @@ var Task = {
 
         var task_text = $("<p></p>");
         task_text.text($(this).val());
-        task_text.click(Task.edit);
+        task_text.dblclick(Task.edit);
         $(this).replaceWith(task_text);
     },
 
