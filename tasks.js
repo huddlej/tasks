@@ -146,13 +146,20 @@ var Task = {
         // sequence number hasn't changed, don't update it.  These means only n
         // updates need to be made where n is the original offset of the moved
         // item in the list.
+        var updated_tasks = [];
         $(this).children().each(function(i) {
-            var task = Task._tasks[this.id];
-            if (task.sequence_number != i + 1) {
-                task.sequence_number = i + 1;
-                Task.save(task);
+            if (Task._tasks[this.id].sequence_number != i + 1) {
+                Task._tasks[this.id].sequence_number = i + 1;
+                updated_tasks.push(Task._tasks[this.id]);
             }
         });
+
+        // Bulk save any tasks that have changed.
+        if (updated_tasks.length > 0) {
+            console.log("Bulk save: ");
+            console.log(updated_tasks);
+            Task.db.bulkSave(updated_tasks);
+        }
     },
 
     toggle: function() {
