@@ -195,7 +195,8 @@ function prepare_document() {
             console.log("New task: " + task + " added at " + modified_date);
             data = {"task": task,
                     "modified_date": modified_date,
-                    "is_closed": false};
+                    "is_closed": false,
+                    "sequence_number": 1};
             Task.save(data);
         }
 
