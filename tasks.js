@@ -94,12 +94,23 @@ var Task = {
         var task_input = $("<input type=\"text\" size=\"" + size + "\" />");
         task_input.val($(this).text());
         task_input.blur(Task.update);
-        $(this).replaceWith(task_input);
+
+        var form = $("<form></form>");
+        form.append(task_input);
+        form.submit(function() {
+                        // Instead of testing for keypress equal to "enter" on
+                        // the input field, use the form's submit method to blur
+                        // the input field.  This will trigger the correct
+                        // action from the input field.
+                        $(this).find("input").blur();
+                        return false;
+                    });
+        $(this).replaceWith(form);
         task_input.focus();
     },
 
     update: function() {
-        var id = $(this).parent().attr("id");
+        var id = $(this).parent().parent().attr("id");
         console.log("Updating edited task: " + id);
         var updated_text = $(this).val();
 
@@ -111,9 +122,11 @@ var Task = {
             var task = Task._tasks[id];
             Task.save(task);
 
-            var list = $(this).parent().parent();
+            var list = $("#unassigned-tasks");
+            console.log("list: ");
             console.log(list);
-            var list_element = $(this).parent();
+            var list_element = $("#" + id);
+            console.log("list element: ");
             console.log(list_element);
             list.prepend(list_element);
         }
@@ -121,7 +134,9 @@ var Task = {
         var task_text = $("<p></p>");
         task_text.text($(this).val());
         task_text.dblclick(Task.edit);
-        $(this).replaceWith(task_text);
+        $(this).parent().replaceWith(task_text);
+
+        return false;
     },
 
     toggle: function() {
@@ -152,7 +167,7 @@ var Task = {
 function prepare_document() {
     // Load existing tasks.
     console.log("Loading existing tasks");
-    Task.db.view("tasks/all", {success: Task.load});
+    Task.db.view("tasks/all?descending=true", {success: Task.load});
 
     // Attach event handler to new task form.
     console.log("Attaching event handler to new task form");
@@ -171,6 +186,9 @@ function prepare_document() {
         $("#new-task").val("");
         return false;
     });
+
+    // Make the unassigned task list sortable.
+    $("#unassigned-tasks").sortable();
 
     // Select the new task field.
     $("#new-task").focus();

@@ -2,6 +2,14 @@
     text-decoration: line-through;
 }
 
-ol li p {
+ol li p, form {
     display: inline;
+}
+
+li {
+    cursor: pointer;
+}
+
+#unassigned-tasks {
+    width: 600px;
 }
