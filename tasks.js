@@ -55,7 +55,7 @@ var Task = {
     add_to_dom: function(task) {
         // Add task to the list of available tasks.
         Task._tasks[task._id] = task;
-        console.log("Adding task to DOM: " + task._id);
+        console.log("Adding task to DOM: " + task._id + " with sequence number " + task.sequence_number);
         var task_list = $("<li id=\"" + task._id + "\"></li>");
 
         var task_checkbox = $("<input type=\"checkbox\" />");
@@ -139,6 +139,22 @@ var Task = {
         return false;
     },
 
+    update_order: function(event, ui) {
+        console.log("Updating order of tasks...");
+
+        // Update task order after manual reordering by the user.  If a task's
+        // sequence number hasn't changed, don't update it.  These means only n
+        // updates need to be made where n is the original offset of the moved
+        // item in the list.
+        $(this).children().each(function(i) {
+            var task = Task._tasks[this.id];
+            if (task.sequence_number != i + 1) {
+                task.sequence_number = i + 1;
+                Task.save(task);
+            }
+        });
+    },
+
     toggle: function() {
         /*
          * If the checkbox is checked after the click, the task has been closed.  If
@@ -188,7 +204,7 @@ function prepare_document() {
     });
 
     // Make the unassigned task list sortable.
-    $("#unassigned-tasks").sortable();
+    $("#unassigned-tasks").sortable({stop: Task.update_order});
 
     // Select the new task field.
     $("#new-task").focus();
