@@ -12,8 +12,8 @@
         <script src="tasks.js" type="text/javascript"></script>
     </head>
     <body>
-        <h1>Tasks</h1>
-        <div>
+        <div id="tasks">
+            <h1>Tasks</h1>
             <form id="new-task-form">
                 <input type="text" id="new-task" /> <input type="submit" value="Add" />
             </form>
@@ -21,6 +21,15 @@
             <ol id="unassigned-tasks">
             </ol>
         </div>
-        <div id="assigned-tasks"></div>
+
+        <div id="owners">
+            <h1>Owners</h1>
+            <form id="new-owner-form">
+                <input type="text" id="new-owner" /> <input type="submit" value="Add" />
+            </form>
+
+            <ul id="owners-tasks">
+            </ul>
+        </div>
     </body>
 </html>

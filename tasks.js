@@ -184,6 +184,28 @@ var Task = {
         }
 
         Task.save(Task._tasks[id]);
+    },
+
+    add_owner: function() {
+        var input = $("#new-owner");
+        console.log(input.val());
+
+        var owner = {username: input.val()};
+        Task.db.saveDoc(owner);
+
+        $("#owners-tasks").append("<li>" + input.val() + "</li>");
+        $("#new-owner").val("");
+        return false;
+    },
+
+    load_owners: function(owners) {
+        console.log(owners);
+        if(owners && owners.total_rows > 0) {
+            for(var index = 0; index < owners.total_rows; index++) {
+                var owner = owners.rows[index].value;
+                $("#owners-tasks").append("<li>" + owner.username + "</li>");
+            }
+        }
     }
 };
 
@@ -191,6 +213,7 @@ function prepare_document() {
     // Load existing tasks.
     console.log("Loading existing tasks");
     Task.db.view("tasks/all?descending=true", {success: Task.load});
+    Task.db.view("tasks/owners", {success: Task.load_owners});
 
     // Attach event handler to new task form.
     console.log("Attaching event handler to new task form");
@@ -210,6 +233,9 @@ function prepare_document() {
         $("#new-task").val("");
         return false;
     });
+
+    // Attach event handler to new owner form.
+    $("#new-owner-form").submit(Task.add_owner);
 
     // Make the unassigned task list sortable.
     $("#unassigned-tasks").sortable({stop: Task.update_order});

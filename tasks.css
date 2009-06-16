@@ -10,6 +10,12 @@ li {
     cursor: pointer;
 }
 
-#unassigned-tasks {
+#tasks {
+    float: left;
+    width: 600px;
+}
+
+#owners {
+    float: left;
     width: 600px;
 }
