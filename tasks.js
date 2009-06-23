@@ -193,7 +193,7 @@ var Task = {
         var owner = {username: input.val()};
         Task.db.saveDoc(owner);
 
-        $("#owners-tasks").append("<li>" + input.val() + "</li>");
+        $("#owners-tasks").append("<div>" + input.val() + "</div>");
         $("#new-owner").val("");
         return false;
     },
@@ -203,7 +203,7 @@ var Task = {
         if(owners && owners.total_rows > 0) {
             for(var index = 0; index < owners.total_rows; index++) {
                 var owner = owners.rows[index].value;
-                $("#owners-tasks").append("<li>" + owner.username + "</li>");
+                $("#owners-tasks").append("<div>" + owner.username + "</div>");
             }
         }
     }

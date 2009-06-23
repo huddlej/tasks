@@ -19,3 +19,18 @@ li {
     float: left;
     width: 600px;
 }
+
+#owners-tasks {
+    margin-top: 1em;
+}
+
+#owners-tasks div {
+    background-color: #ffc100;
+    border: 1px solid navy;
+    float: left;
+    height: 100px;
+    margin-right: 1em;
+    margin-top: 1em;
+    padding: 1em;
+    width: 200px;
+}
