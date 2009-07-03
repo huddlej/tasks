@@ -1,6 +1,7 @@
 //<![CDATA[
 var Task = {
     _tasks: {},
+    _owners: {},
     db: $.couch.db("tasks"),
 
     load: function(tasks) {
@@ -195,6 +196,8 @@ var Task = {
 
         $("#owners-tasks").append("<div>" + input.val() + "</div>");
         $("#new-owner").val("");
+        Task._owners[owner.username] = owner;
+
         return false;
     },
 
@@ -203,7 +206,32 @@ var Task = {
         if(owners && owners.total_rows > 0) {
             for(var index = 0; index < owners.total_rows; index++) {
                 var owner = owners.rows[index].value;
-                $("#owners-tasks").append("<div>" + owner.username + "</div>");
+                Task._owners[owner.username] = owner;
+
+                if (owner.name) {
+                    var title = owner.name;
+                }
+                else {
+                    var title = owner.username;
+                }
+
+                var owner_div = $("<div>" + title + "</div>");
+                owner_div.append("<ul id=\"" + owner.username + "\"></ul>");
+                $("#owners-tasks").append(owner_div);
+            }
+
+            console.log("Loading tasks by owner");
+            Task.db.view("tasks/by_owner", {success: Task.load_owner_tasks});
+        }
+    },
+
+    load_owner_tasks: function(owner_tasks) {
+        console.log("Got tasks by owner");
+        if(owner_tasks && owner_tasks.total_rows > 0) {
+            for(var index = 0; index < owner_tasks.total_rows; index++) {
+                var username = owner_tasks.rows[index].key;
+                var task = owner_tasks.rows[index].value;
+                $("#" + username).append("<li>" + task.task + "</li>");
             }
         }
     }
@@ -212,7 +240,7 @@ var Task = {
 function prepare_document() {
     // Load existing tasks.
     console.log("Loading existing tasks");
-    Task.db.view("tasks/all?descending=true", {success: Task.load});
+    Task.db.view("tasks/unassigned?descending=true", {success: Task.load});
     Task.db.view("tasks/owners", {success: Task.load_owners});
 
     // Attach event handler to new task form.
@@ -238,7 +266,16 @@ function prepare_document() {
     $("#new-owner-form").submit(Task.add_owner);
 
     // Make the unassigned task list sortable.
-    $("#unassigned-tasks").sortable({stop: Task.update_order});
+    //$("#unassigned-tasks").sortable({stop: Task.update_order});
+
+    // Make owner boxes droppable for tasks.
+    //$("#unassigned-tasks li").draggable();
+    $("#dragthis").draggable();
+    $("#drophere").droppable({
+        drop: function(event, ui) {
+            console.log("hello world.");
+        }
+    });
 
     // Select the new task field.
     $("#new-task").focus();
