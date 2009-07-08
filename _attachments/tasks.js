@@ -159,7 +159,21 @@ var Task = {
         if (updated_tasks.length > 0) {
             console.log("Bulk save: ");
             console.log(updated_tasks);
-            Task.db.bulkSave(updated_tasks);
+            Task.db.bulkSave(updated_tasks,
+                             {success: Task.update_bulk_doc_revisions});
+        }
+    },
+
+    update_bulk_doc_revisions: function(bulk_save_response) {
+        for (var i in bulk_save_response) {
+            var response = bulk_save_response[i];
+            if (response.rev) {
+                console.log("Updated doc " + response.id + " from rev " + Task._tasks[response.id]._rev + " to " + response.rev);
+                Task._tasks[response.id]._rev = response.rev;
+            }
+            else {
+                console.log("Update for document " + response.id + " failed: " + response.reason);
+            }
         }
     },
 
@@ -269,16 +283,16 @@ function prepare_document() {
     $("#new-owner-form").submit(Task.add_owner);
 
     // Make the unassigned task list sortable.
-    //$("#unassigned-tasks").sortable({stop: Task.update_order});
+    $("#unassigned-tasks").sortable({stop: Task.update_order});
 
     // Make owner boxes droppable for tasks.
     //$("#unassigned-tasks li").draggable();
-    $("#dragthis").draggable();
-    $("#drophere").droppable({
-        drop: function(event, ui) {
-            console.log("hello world.");
-        }
-    });
+    // $("#dragthis").draggable();
+//     $("#drophere").droppable({
+//         drop: function(event, ui) {
+//             console.log("hello world.");
+//         }
+//     });
 
     // Select the new task field.
     $("#new-task").focus();
