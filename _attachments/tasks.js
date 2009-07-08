@@ -167,13 +167,8 @@ var Task = {
     update_bulk_doc_revisions: function(bulk_save_response) {
         for (var i in bulk_save_response) {
             var response = bulk_save_response[i];
-            if (response.rev) {
-                console.log("Updated doc " + response.id + " from rev " + Task._tasks[response.id]._rev + " to " + response.rev);
-                Task._tasks[response.id]._rev = response.rev;
-            }
-            else {
-                console.log("Update for document " + response.id + " failed: " + response.reason);
-            }
+            console.log("Updated doc " + response.id + " from rev " + Task._tasks[response.id]._rev + " to " + response.rev);
+            Task._tasks[response.id]._rev = response.rev;
         }
     },
 
