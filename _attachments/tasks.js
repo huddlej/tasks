@@ -2,7 +2,7 @@
 var Task = {
     _tasks: {},
     _owners: {},
-    db: $.couch.db("tasks"),
+    db: $.couch.db("task"),
 
     load: function(tasks) {
         console.log(tasks);
@@ -221,7 +221,8 @@ var Task = {
             }
 
             console.log("Loading tasks by owner");
-            Task.db.view("tasks/by_owner", {success: Task.load_owner_tasks});
+            Task.db.view([Task.db.name, "by_owner"].join("/"),
+                         {success: Task.load_owner_tasks});
         }
     },
 
@@ -240,8 +241,10 @@ var Task = {
 function prepare_document() {
     // Load existing tasks.
     console.log("Loading existing tasks");
-    Task.db.view("tasks/unassigned?descending=true", {success: Task.load});
-    Task.db.view("tasks/owners", {success: Task.load_owners});
+    Task.db.view([Task.db.name, "unassigned?descending=true"].join("/"),
+                 {success: Task.load});
+    Task.db.view([Task.db.name, "owners"].join("/"),
+                 {success: Task.load_owners});
 
     // Attach event handler to new task form.
     console.log("Attaching event handler to new task form");
