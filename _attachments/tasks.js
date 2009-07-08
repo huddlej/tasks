@@ -122,14 +122,6 @@ var Task = {
 
             var task = Task._tasks[id];
             Task.save(task);
-
-            var list = $("#unassigned-tasks");
-            console.log("list: ");
-            console.log(list);
-            var list_element = $("#" + id);
-            console.log("list element: ");
-            console.log(list_element);
-            list.prepend(list_element);
         }
 
         var task_text = $("<p></p>");
