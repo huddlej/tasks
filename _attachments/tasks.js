@@ -2,7 +2,7 @@
 var Task = {
     _tasks: {},
     _owners: {},
-    db: $.couch.db("task"),
+    db: $.couch.db("tasks"),
 
     load: function(tasks) {
         console.log(tasks);
@@ -188,6 +188,23 @@ var Task = {
         Task.save(Task._tasks[id]);
     },
 
+    hide_completed: function() {
+        console.log("Hide completed tasks");
+        var completed_tasks = [];
+        for (var index in Task._tasks) {
+            if (Task._tasks[index].is_closed) {
+                Task._tasks[index].is_hidden = true;
+                completed_tasks.push(Task._tasks[index]);
+            }
+        }
+
+        if (completed_tasks.length > 0) {
+            Task.db.bulkSave(completed_tasks);
+        }
+
+        return false;
+    },
+
     add_owner: function() {
         var input = $("#new-owner");
         console.log(input.val());
@@ -280,6 +297,9 @@ function prepare_document() {
 //             console.log("hello world.");
 //         }
 //     });
+
+    // Attach event handler to "hide completed" link.
+    $("#hide_completed").click(Task.hide_completed);
 
     // Select the new task field.
     $("#new-task").focus();
