@@ -28,6 +28,7 @@ var Task = {
                 console.log(response);
                 console.log("Added task with new id: " + task._id);
                 Task.add_to_dom(task);
+                Task.update_order();
             }});
         }
     },
@@ -140,7 +141,7 @@ var Task = {
         // updates need to be made where n is the original offset of the moved
         // item in the list.
         var updated_tasks = [];
-        $(this).children().each(function(i) {
+        $("#unassigned-tasks").children().each(function(i) {
             if (Task._tasks[this.id].sequence_number != i + 1) {
                 Task._tasks[this.id].sequence_number = i + 1;
                 updated_tasks.push(Task._tasks[this.id]);
@@ -276,8 +277,7 @@ function prepare_document() {
             console.log("New task: " + task + " added at " + modified_date);
             data = {"task": task,
                     "modified_date": modified_date,
-                    "is_closed": false,
-                    "sequence_number": 1};
+                    "is_closed": false};
             Task.save(data);
         }
 
