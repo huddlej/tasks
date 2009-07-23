@@ -195,6 +195,8 @@ var Task = {
             if (Task._tasks[index].is_closed) {
                 Task._tasks[index].is_hidden = true;
                 completed_tasks.push(Task._tasks[index]);
+                $("#" + Task._tasks[index]._id).remove();
+                delete Task._tasks[index];
             }
         }
 
