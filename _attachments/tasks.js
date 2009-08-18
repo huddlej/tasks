@@ -1,11 +1,16 @@
-//<![CDATA[
+var log = function (message) {
+    if (window.console) {
+        window.console.debug(message);
+    }
+};
+
 var Task = {
     _tasks: {},
     _owners: {},
     db: $.couch.db("tasks"),
 
     load: function(tasks) {
-        console.log(tasks);
+        log(tasks);
         if(tasks && tasks.total_rows > 0) {
             for(var index = 0; index < tasks.total_rows; index++) {
                 var task = tasks.rows[index].value;
@@ -17,16 +22,16 @@ var Task = {
     save: function(task) {
         if (task._id) {
             Task.db.saveDoc(task, {success: function(response) {
-                console.log("Saved doc successfully");
-                console.log(response);
-                console.log("Updated task with id: " + task._id);
+                log("Saved doc successfully");
+                log(response);
+                log("Updated task with id: " + task._id);
             }});
         }
         else {
             Task.db.saveDoc(task, {success: function(response) {
-                console.log("Saved doc successfully");
-                console.log(response);
-                console.log("Added task with new id: " + task._id);
+                log("Saved doc successfully");
+                log(response);
+                log("Added task with new id: " + task._id);
                 Task.add_to_dom(task);
                 Task.update_order();
             }});
@@ -35,14 +40,14 @@ var Task = {
 
     delete: function() {
         var id = $(this).parent().attr("id");
-        console.log("Deleting task: " + id);
+        log("Deleting task: " + id);
         var task = Task._tasks[id];
 
         // Delete task from the database by marking it as deleted.
         task.is_deleted = true;
         Task.db.saveDoc(task, {success: function(response) {
-            console.log("Deleted doc successfully");
-            console.log(response);
+            log("Deleted doc successfully");
+            log(response);
         }});
 
         // Delete task from task array.
@@ -57,7 +62,7 @@ var Task = {
     add_to_dom: function(task) {
         // Add task to the list of available tasks.
         Task._tasks[task._id] = task;
-        console.log("Adding task to DOM: " + task._id + " with sequence number " + task.sequence_number);
+        log("Adding task to DOM: " + task._id + " with sequence number " + task.sequence_number);
         var task_list = $("<li id=\"" + task._id + "\"></li>");
 
         var task_checkbox = $("<input type=\"checkbox\" />");
@@ -90,7 +95,7 @@ var Task = {
     },
 
     edit: function() {
-        console.log("Editing task: " + $(this).text());
+        log("Editing task: " + $(this).text());
         // Make edit fields the length of the text to be edited.
         var size = String($(this).text().length);
         var task_input = $("<input type=\"text\" size=\"" + size + "\" />");
@@ -113,7 +118,7 @@ var Task = {
 
     update: function() {
         var id = $(this).parent().parent().attr("id");
-        console.log("Updating edited task: " + id);
+        log("Updating edited task: " + id);
         var updated_text = $(this).val();
 
         // Only update the task if its value has changed.
@@ -134,7 +139,7 @@ var Task = {
     },
 
     update_order: function(event, ui) {
-        console.log("Updating order of tasks...");
+        log("Updating order of tasks...");
 
         // Update task order after manual reordering by the user.  If a task's
         // sequence number hasn't changed, don't update it.  These means only n
@@ -150,8 +155,8 @@ var Task = {
 
         // Bulk save any tasks that have changed.
         if (updated_tasks.length > 0) {
-            console.log("Bulk save: ");
-            console.log(updated_tasks);
+            log("Bulk save: ");
+            log(updated_tasks);
             Task.db.bulkSave(updated_tasks,
                              {success: Task.update_bulk_doc_revisions});
         }
@@ -160,7 +165,7 @@ var Task = {
     update_bulk_doc_revisions: function(bulk_save_response) {
         for (var i in bulk_save_response) {
             var response = bulk_save_response[i];
-            console.log("Updated doc " + response.id + " from rev " + Task._tasks[response.id]._rev + " to " + response.rev);
+            log("Updated doc " + response.id + " from rev " + Task._tasks[response.id]._rev + " to " + response.rev);
             Task._tasks[response.id]._rev = response.rev;
         }
     },
@@ -171,17 +176,17 @@ var Task = {
          * the box is not checked after the click, the task has been opened.
          */
         var id = $(this).parent().attr("id");
-        console.log("Toggling task: " + id);
+        log("Toggling task: " + id);
 
         if ($(this).attr("checked")) {
             Task._tasks[id].is_closed = true;
-            console.log("Task closed: " + $(this).parent().attr("id"));
+            log("Task closed: " + $(this).parent().attr("id"));
             $(this).siblings("p").addClass("closed");
             $(this).siblings("p").unbind("click", Task.edit);
         }
         else {
             Task._tasks[id].is_closed = false;
-            console.log("Task opened: " + $(this).parent().attr("id"));
+            log("Task opened: " + $(this).parent().attr("id"));
             $(this).siblings("p").removeClass("closed");
             $(this).siblings("p").bind("click", Task.edit);
         }
@@ -190,7 +195,7 @@ var Task = {
     },
 
     hide_completed: function() {
-        console.log("Hide completed tasks");
+        log("Hide completed tasks");
         var completed_tasks = [];
         for (var index in Task._tasks) {
             if (Task._tasks[index].is_closed) {
@@ -210,7 +215,7 @@ var Task = {
 
     add_owner: function() {
         var input = $("#new-owner");
-        console.log(input.val());
+        log(input.val());
 
         var owner = {username: input.val()};
         Task.db.saveDoc(owner);
@@ -223,7 +228,7 @@ var Task = {
     },
 
     load_owners: function(owners) {
-        console.log(owners);
+        log(owners);
         if(owners && owners.total_rows > 0) {
             for(var index = 0; index < owners.total_rows; index++) {
                 var owner = owners.rows[index].value;
@@ -241,14 +246,14 @@ var Task = {
                 $("#owners-tasks").append(owner_div);
             }
 
-            console.log("Loading tasks by owner");
+            log("Loading tasks by owner");
             Task.db.view([Task.db.name, "by_owner"].join("/"),
                          {success: Task.load_owner_tasks});
         }
     },
 
     load_owner_tasks: function(owner_tasks) {
-        console.log("Got tasks by owner");
+        log("Got tasks by owner");
         if(owner_tasks && owner_tasks.total_rows > 0) {
             for(var index = 0; index < owner_tasks.total_rows; index++) {
                 var username = owner_tasks.rows[index].key;
@@ -261,20 +266,20 @@ var Task = {
 
 function prepare_document() {
     // Load existing tasks.
-    console.log("Loading existing tasks");
+    log("Loading existing tasks");
     Task.db.view([Task.db.name, "unassigned?descending=true"].join("/"),
                  {success: Task.load});
     Task.db.view([Task.db.name, "owners"].join("/"),
                  {success: Task.load_owners});
 
     // Attach event handler to new task form.
-    console.log("Attaching event handler to new task form");
+    log("Attaching event handler to new task form");
     $("#new-task-form").submit(function () {
         var task = $("#new-task").val();
 
         if(task != "") {
             var modified_date = new Date();
-            console.log("New task: " + task + " added at " + modified_date);
+            log("New task: " + task + " added at " + modified_date);
             data = {"task": task,
                     "modified_date": modified_date,
                     "is_closed": false};
@@ -296,7 +301,7 @@ function prepare_document() {
     // $("#dragthis").draggable();
 //     $("#drophere").droppable({
 //         drop: function(event, ui) {
-//             console.log("hello world.");
+//             log("hello world.");
 //         }
 //     });
 
