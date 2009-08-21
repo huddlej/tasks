@@ -6,7 +6,7 @@ var log = function (message) {
     }
 };
 
-var Task = {
+var taskManager = {
     tasks: {},
     owners: {},
     db: $.couch.db("tasks"),
@@ -17,26 +17,26 @@ var Task = {
         if (tasks && tasks.total_rows > 0) {
             for (index = 0; index < tasks.total_rows; index += 1) {
                 task = tasks.rows[index].value;
-                Task.add_to_dom(task);
+                taskManager.add_to_dom(task);
             }
         }
     },
 
     save: function (task) {
         if (task._id) {
-            Task.db.saveDoc(task, {success: function (response) {
+            taskManager.db.saveDoc(task, {success: function (response) {
                 log("Saved doc successfully");
                 log(response);
                 log("Updated task with id: " + task._id);
             }});
         }
         else {
-            Task.db.saveDoc(task, {success: function (response) {
+            taskManager.db.saveDoc(task, {success: function (response) {
                 log("Saved doc successfully");
                 log(response);
                 log("Added task with new id: " + task._id);
-                Task.add_to_dom(task);
-                Task.update_order();
+                taskManager.add_to_dom(task);
+                taskManager.update_order();
             }});
         }
     },
@@ -45,20 +45,20 @@ var Task = {
         var id, task;
         id = $(this).parent().attr("id");
         log("Deleting task: " + id);
-        task = Task.tasks[id];
+        task = taskManager.tasks[id];
 
         // Remove task from the database by marking it as removed.
         task.is_deleted = true;
-        Task.db.saveDoc(task, {success: function (response) {
+        taskManager.db.saveDoc(task, {success: function (response) {
             log("Removed doc successfully");
             log(response);
         }});
 
         // Remove task from task array.
-        delete Task.tasks[id];
+        delete taskManager.tasks[id];
 
         // Remove task from the page.
-        Task.remove_from_dom(task);
+        taskManager.remove_from_dom(task);
 
         return false;
     },
@@ -67,27 +67,27 @@ var Task = {
         // Add task to the list of available tasks.
         task.id = task._id;
         task.rev = task._rev;
-        Task.tasks[task.id] = task;
+        taskManager.tasks[task.id] = task;
         log("Adding task to DOM: " + task.id + " with sequence number " + task.sequence_number);
         var task_list = $("<li id=\"" + task.id + "\"></li>"),
             task_checkbox = $("<input type=\"checkbox\" />"),
             task_text = $("<p>" + task.task + "</p>"),
             delete_link = $("<a href=\"\">x</a>");
 
-        task_checkbox.click(Task.toggle);
+        task_checkbox.click(taskManager.toggle_completed);
 
         if (task.is_closed) {
             task_checkbox.attr("checked", "checked");
             task_text.addClass("closed");
         }
         else {
-            task_text.dblclick(Task.edit);
+            task_text.dblclick(taskManager.edit);
         }
 
         task_list.append(task_checkbox);
         task_list.append(task_text);
 
-        delete_link.click(Task.remove);
+        delete_link.click(taskManager.remove);
         task_list.append("&nbsp;").append(delete_link);
 
         $("#unassigned-tasks").prepend(task_list);
@@ -106,7 +106,7 @@ var Task = {
             task_input = $("<input type=\"text\" size=\"" + size + "\" />"),
             form = $("<form></form>");
         task_input.val($(this).text());
-        task_input.blur(Task.update);
+        task_input.blur(taskManager.update);
 
         form.append(task_input);
         form.submit(function () {
@@ -130,17 +130,17 @@ var Task = {
         updated_text = $(this).val();
 
         // Only update the task if its value has changed.
-        if (updated_text !== Task.tasks[id].task) {
-            Task.tasks[id].task = updated_text;
-            Task.tasks[id].modified_date = new Date();
+        if (updated_text !== taskManager.tasks[id].task) {
+            taskManager.tasks[id].task = updated_text;
+            taskManager.tasks[id].modified_date = new Date();
 
-            task = Task.tasks[id];
-            Task.save(task);
+            task = taskManager.tasks[id];
+            taskManager.save(task);
         }
 
         task_text = $("<p></p>");
         task_text.text($(this).val());
-        task_text.dblclick(Task.edit);
+        task_text.dblclick(taskManager.edit);
         $(this).parent().replaceWith(task_text);
 
         return false;
@@ -155,9 +155,9 @@ var Task = {
         // item in the list.
         var updated_tasks = [];
         $("#unassigned-tasks").children().each(function (i) {
-            if (Task.tasks[this.id].sequence_number !== i + 1) {
-                Task.tasks[this.id].sequence_number = i + 1;
-                updated_tasks.push(Task.tasks[this.id]);
+            if (taskManager.tasks[this.id].sequence_number !== i + 1) {
+                taskManager.tasks[this.id].sequence_number = i + 1;
+                updated_tasks.push(taskManager.tasks[this.id]);
             }
         });
 
@@ -165,8 +165,8 @@ var Task = {
         if (updated_tasks.length > 0) {
             log("Bulk save: ");
             log(updated_tasks);
-            Task.db.bulkSave(updated_tasks,
-                             {success: Task.update_bulk_doc_revisions});
+            taskManager.db.bulkSave(updated_tasks,
+                             {success: taskManager.update_bulk_doc_revisions});
         }
     },
 
@@ -175,13 +175,13 @@ var Task = {
         for (i in bulk_save_response) {
             if (bulk_save_response.hasOwnProperty(i)) {
                 response = bulk_save_response[i];
-                log("Updated doc " + response.id + " from rev " + Task.tasks[response.id].rev + " to " + response.rev);
-                Task.tasks[response.id].rev = response.rev;
+                log("Updated doc " + response.id + " from rev " + taskManager.tasks[response.id].rev + " to " + response.rev);
+                taskManager.tasks[response.id].rev = response.rev;
             }
         }
     },
 
-    toggle: function () {
+    toggle_completed: function () {
         /*
          * If the checkbox is checked after the click, the task has been closed.  If
          * the box is not checked after the click, the task has been opened.
@@ -190,35 +190,35 @@ var Task = {
         log("Toggling task: " + id);
 
         if ($(this).attr("checked")) {
-            Task.tasks[id].is_closed = true;
-            log("Task closed: " + $(this).parent().attr("id"));
+            taskManager.tasks[id].is_closed = true;
+            log("taskManager closed: " + $(this).parent().attr("id"));
             $(this).siblings("p").addClass("closed");
-            $(this).siblings("p").unbind("click", Task.edit);
+            $(this).siblings("p").unbind("click", taskManager.edit);
         }
         else {
-            Task.tasks[id].is_closed = false;
-            log("Task opened: " + $(this).parent().attr("id"));
+            taskManager.tasks[id].is_closed = false;
+            log("taskManager opened: " + $(this).parent().attr("id"));
             $(this).siblings("p").removeClass("closed");
-            $(this).siblings("p").bind("click", Task.edit);
+            $(this).siblings("p").bind("click", taskManager.edit);
         }
 
-        Task.save(Task.tasks[id]);
+        taskManager.save(taskManager.tasks[id]);
     },
 
     hide_completed: function () {
         log("Hide completed tasks");
         var completed_tasks = [], index;
-        for (index in Task.tasks) {
-            if (Task.tasks[index].is_closed) {
-                Task.tasks[index].is_hidden = true;
-                completed_tasks.push(Task.tasks[index]);
-                $("#" + Task.tasks[index].id).remove();
-                delete Task.tasks[index];
+        for (index in taskManager.tasks) {
+            if (taskManager.tasks[index].is_closed) {
+                taskManager.tasks[index].is_hidden = true;
+                completed_tasks.push(taskManager.tasks[index]);
+                $("#" + taskManager.tasks[index].id).remove();
+                delete taskManager.tasks[index];
             }
         }
 
         if (completed_tasks.length > 0) {
-            Task.db.bulkSave(completed_tasks);
+            taskManager.db.bulkSave(completed_tasks);
         }
 
         return false;
@@ -230,11 +230,11 @@ var Task = {
         log(input.val());
 
         owner = {username: input.val()};
-        Task.db.saveDoc(owner);
+        taskManager.db.saveDoc(owner);
 
         $("#owners-tasks").append("<div>" + input.val() + "</div>");
         $("#new-owner").val("");
-        Task.owners[owner.username] = owner;
+        taskManager.owners[owner.username] = owner;
 
         return false;
     },
@@ -248,7 +248,7 @@ var Task = {
         if (owners && owners.total_rows > 0) {
             for (index = 0; index < owners.total_rows; index += 1) {
                 owner = owners.rows[index].value;
-                Task.owners[owner.username] = owner;
+                taskManager.owners[owner.username] = owner;
 
                 if (owner.name) {
                     title = owner.name;
@@ -263,8 +263,8 @@ var Task = {
             }
 
             log("Loading tasks by owner");
-            Task.db.view([Task.db.name, "by_owner"].join("/"),
-                         {success: Task.load_owner_tasks});
+            taskManager.db.view([taskManager.db.name, "by_owner"].join("/"),
+                         {success: taskManager.load_owner_tasks});
         }
     },
 
@@ -286,10 +286,10 @@ var Task = {
 function prepare_document() {
     // Load existing tasks.
     log("Loading existing tasks");
-    Task.db.view([Task.db.name, "unassigned?descending=true"].join("/"),
-                 {success: Task.load});
-//     Task.db.view([Task.db.name, "owners"].join("/"),
-//                  {success: Task.load_owners});
+    taskManager.db.view([taskManager.db.name, "unassigned?descending=true"].join("/"),
+                 {success: taskManager.load});
+//     taskManager.db.view([taskManager.db.name, "owners"].join("/"),
+//                  {success: taskManager.load_owners});
 
     // Attach event handler to new task form.
     log("Attaching event handler to new task form");
@@ -305,7 +305,7 @@ function prepare_document() {
             data = {"task": task,
                     "modified_date": modified_date,
                     "is_closed": false};
-            Task.save(data);
+            taskManager.save(data);
         }
 
         $("#new-task").val("");
@@ -313,10 +313,10 @@ function prepare_document() {
     });
 
 //     // Attach event handler to new owner form.
-//     $("#new-owner-form").submit(Task.add_owner);
+//     $("#new-owner-form").submit(taskManager.add_owner);
 
     // Make the unassigned task list sortable.
-    $("#unassigned-tasks").sortable({stop: Task.update_order});
+    $("#unassigned-tasks").sortable({stop: taskManager.update_order});
 
     // Make owner boxes droppable for tasks.
     //$("#unassigned-tasks li").draggable();
@@ -328,7 +328,7 @@ function prepare_document() {
 //     });
 
     // Attach event handler to "hide completed" link.
-    $("#hide_completed").click(Task.hide_completed);
+    $("#hide_completed").click(taskManager.hide_completed);
 
     // Select the new task field.
     $("#new-task").focus();
